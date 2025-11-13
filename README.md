@@ -1,3 +1,5 @@
+// ...existing code...
+
 # Jenkins-SonarQube-Artifactory-Ansible
 
 ## 🚀 CI/CD Pipeline for PHP TODO Application
@@ -95,6 +97,77 @@ sudo /opt/sonarqube/bin/linux-x86-64/sonar.sh start
 Access UI at:
 👉 `http://<sonarqube-ip>:9000`
 Login as `admin/admin`, change password, and create a **Project Token**.
+
+### Install and Setup PostgreSQL 10 Database for SonarQube
+
+The commands below add the PostgreSQL repository, install PostgreSQL 10, and create a dedicated database/user for SonarQube.
+
+1. Add PostgreSQL repository to the apt sources:
+
+```bash
+sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" >> /etc/apt/sources.list.d/pgdg.list'
+```
+
+2. Download and add the PostgreSQL signing key:
+
+```bash
+wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O - | sudo apt-key add -
+```
+
+3. Update apt and install PostgreSQL server and contrib package:
+
+```bash
+sudo apt-get update
+sudo apt-get -y install postgresql postgresql-contrib
+```
+
+4. Start and enable PostgreSQL service:
+
+```bash
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+```
+
+5. Change the password for the default postgres user (enter the password you intend to use):
+
+```bash
+sudo passwd postgres
+```
+
+6. Switch to the postgres user:
+
+```bash
+su - postgres
+```
+
+7. Create a new PostgreSQL role/user for SonarQube:
+
+```bash
+createuser sonar
+```
+
+8. Enter the PostgreSQL shell:
+
+```bash
+psql
+```
+
+9. In the psql shell, set a password for the sonar user and create the SonarQube database:
+
+```sql
+ALTER USER sonar WITH ENCRYPTED PASSWORD 'sonar';
+CREATE DATABASE sonarqube OWNER sonar;
+grant all privileges on DATABASE sonarqube to sonar;
+\q
+```
+
+10. Exit the postgres account to return to your sudo user:
+
+```bash
+exit
+```
+
+Note: Replace the example password 'sonar' with a secure password and store it safely. Update your SonarQube `/opt/sonarqube/conf/sonar.properties` with the correct JDBC URL, username, and password (for example `jdbc:postgresql://localhost:5432/sonarqube`).
 
 ---
 
@@ -350,4 +423,3 @@ Dev/Prod Server (Running PHP TODO App)
 * **Immutable builds** stored in Artifactory guarantee reproducibility.
 * **One-click deployment** through Ansible provides consistent releases.
 * **Full visibility** via Jenkins dashboard and plots.
-
